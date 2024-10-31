@@ -1,4 +1,11 @@
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 abstract class Quarto {
@@ -169,28 +176,20 @@ class Hotel {
     }
 }
 
-public class SistemaHotel {
+public class hotelV2 {
     public static void main(String[] args) {
         Hotel hotel = new Hotel();
 
-        QuartoNormal q1 = new QuartoNormal("normal", 50, true, 500);
-        QuartoFamilia q2 = new QuartoFamilia("familia", 51, true, 700);
-        QuartoSuite q3 = new QuartoSuite("Suite", 53, true, 1000);
-
-        hotel.adicionarQuarto(q1);
-        hotel.adicionarQuarto(q2);
-        hotel.adicionarQuarto(q3);
-
-        ClienteVIP cliente1 = new ClienteVIP("12345678900", "Alice", 100);
-        ClienteDiamante cliente2 = new ClienteDiamante("09876543211", "Bob", 500, 0.1);
-
-        hotel.cadastrarCliente(cliente1);
-        hotel.cadastrarCliente(cliente2);
-
-        Estadia estadia = new Estadia(5);
-        Pagamento pagamento = new Pagamento("Cartão de Crédito");
-
-        hotel.criarReserva(cliente1, q1, estadia, pagamento);
-        hotel.criarReserva(cliente2, q3, estadia, pagamento);
+        try {
+            FileReader arquivo = new FileReader("cliente.txt");
+            BufferedReader buffer = new BufferedReader(arquivo);
+            String str;
+            while ((str = buffer.readLine()) != null) {
+                System.out.println(str);
+            }
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
     }
 }
