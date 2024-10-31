@@ -1,3 +1,4 @@
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,64 +31,35 @@ abstract class Quarto {
 }
 
 class QuartoNormal extends Quarto {
-    public QuartoNormal(String classe, int numero,boolean disponivel, int valorDiaria) {
-        super("Normal", 50, true, 100);
+    public QuartoNormal(int numero, boolean disponivel, int valorDiaria) {
+        super("Normal", numero, disponivel, valorDiaria);
     }
 
     @Override
     public double calcularValorTotal(int dias) {
-        return 100 * dias;
+        return dias * 100;
     }
 }
 
 class QuartoFamilia extends Quarto {
-    public QuartoFamilia(String classe, int numero,boolean disponivel, int valorDiaria) {
-        super("Familia", 51, true, 200);
+    public QuartoFamilia(int numero, boolean disponivel, int valorDiaria) {
+        super("Familia", numero, disponivel, valorDiaria);
     }
 
     @Override
     public double calcularValorTotal(int dias) {
-        return 200 * dias;
+        return dias * 200;
     }
 }
 
 class QuartoSuite extends Quarto {
-    public QuartoSuite(String classe, int numero,boolean disponivel, int valorDiaria) {
-        super("Suite",52, true, 500);
+    public QuartoSuite(int numero, boolean disponivel, int valorDiaria) {
+        super("Suite", numero, disponivel, valorDiaria);
     }
 
     @Override
     public double calcularValorTotal(int dias) {
-        return 500 * dias;
-    }
-}
-
-class Unidades {
-    private String local;
-    private List<String> locais = new ArrayList<>();
-
-    public Unidades(String local) {
-        this.local = local;
-    }
-
-    public void adicionarLocal(String novoLocal) {
-        locais.add(novoLocal);
-    }
-
-    public List<String> getLocais() {
-        return locais;
-    }
-}
-
-class Estadia {
-    private int dias;
-
-    public Estadia(int dias) {
-        this.dias = dias;
-    }
-
-    public int getDias() {
-        return dias;
+        return dias * 500;
     }
 }
 
@@ -112,10 +84,6 @@ class ClienteVIP extends Cliente {
         super(cpf, nome);
         this.pontos = pontos;
     }
-
-    public void adicionarPontos(double valor) {
-        pontos += valor;
-    }
 }
 
 class ClienteDiamante extends Cliente {
@@ -127,9 +95,17 @@ class ClienteDiamante extends Cliente {
         this.pontos = pontos;
         this.desconto = desconto;
     }
+}
 
-    public double aplicarDesconto(double valor) {
-        return valor - (valor * desconto);
+class Estadia {
+    private int dias;
+
+    public Estadia(int dias) {
+        this.dias = dias;
+    }
+
+    public int getDias() {
+        return dias;
     }
 }
 
@@ -169,28 +145,88 @@ class Hotel {
     }
 }
 
+class LeitorDeArquivos {
+    public List<Quarto> lerQuartos(String caminhoArquivo) throws IOException {
+        List<Quarto> quartos = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(caminhoArquivo))) {
+            String linha;
+            while ((linha = br.readLine()) != null) {
+                String[] dados = linha.split(",");
+                String tipo = dados[0];
+                int numero = Integer.parseInt(dados[1]);
+                boolean disponivel = Boolean.parseBoolean(dados[2]);
+                int valorDiaria = Integer.parseInt(dados[3]);
+
+                Quarto quarto;
+                switch (tipo) {
+                    case "Normal":
+                        quarto = new QuartoNormal(numero, disponivel, valorDiaria);
+                        break;
+                    case "Familia":
+                        quarto = new QuartoFamilia(numero, disponivel, valorDiaria);
+                        break;
+                    case "Suite":
+                        quarto = new QuartoSuite(numero, disponivel, valorDiaria);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Tipo de quarto inválido: " + tipo);
+                }
+                quartos.add(quarto);
+            }
+        }
+        return quartos;
+    }
+
+    public List<Cliente> lerClientes(String caminhoArquivo) throws IOException {
+        List<Cliente> clientes = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(caminhoArquivo))) {
+            String linha;
+            while ((linha = br.readLine()) != null) {
+                String[] dados = linha.split(",");
+                String tipo = dados[0];
+                String cpf = dados[1];
+                String nome = dados[2];
+                double pontos = Double.parseDouble(dados[3]);
+
+                Cliente cliente;
+                if (tipo.equals("VIP")) {
+                    cliente = new ClienteVIP(cpf, nome, pontos);
+                } else if (tipo.equals("Diamante")) {
+                    double desconto = Double.parseDouble(dados[4]);
+                    cliente = new ClienteDiamante(cpf, nome, pontos, desconto);
+                } else {
+                    throw new IllegalArgumentException("Tipo de cliente inválido: " + tipo);
+                }
+                clientes.add(cliente);
+            }
+        }
+        return clientes;
+    }
+}
+
 public class SistemaHotel {
     public static void main(String[] args) {
-        Hotel hotel = new Hotel();
+        try {
+            Hotel hotel = new Hotel();
+            LeitorDeArquivos leitor = new LeitorDeArquivos();
 
-        QuartoNormal q1 = new QuartoNormal("normal", 50, true, 500);
-        QuartoFamilia q2 = new QuartoFamilia("familia", 51, true, 700);
-        QuartoSuite q3 = new QuartoSuite("Suite", 53, true, 1000);
+            List<Quarto> quartos = leitor.lerQuartos("quartos.txt");
+            List<Cliente> clientes = leitor.lerClientes("clientes.txt");
 
-        hotel.adicionarQuarto(q1);
-        hotel.adicionarQuarto(q2);
-        hotel.adicionarQuarto(q3);
+            for (Quarto quarto : quartos) {
+                hotel.adicionarQuarto(quarto);
+            }
 
-        ClienteVIP cliente1 = new ClienteVIP("12345678900", "Alice", 100);
-        ClienteDiamante cliente2 = new ClienteDiamante("09876543211", "Bob", 500, 0.1);
+            for (Cliente cliente : clientes) {
+                hotel.cadastrarCliente(cliente);
+            }
 
-        hotel.cadastrarCliente(cliente1);
-        hotel.cadastrarCliente(cliente2);
+            Estadia estadia = new Estadia(5);
+            Pagamento pagamento = new Pagamento("Cartão de Crédito");
 
-        Estadia estadia = new Estadia(5);
-        Pagamento pagamento = new Pagamento("Cartão de Crédito");
-
-        hotel.criarReserva(cliente1, q1, estadia, pagamento);
-        hotel.criarReserva(cliente2, q3, estadia, pagamento);
+            hotel.criarReserva(clientes.get(0), quartos.get(0), estadia, pagamento);
+        } catch (IOException e) {
+            System.out.println("Erro ao ler arquivos: " + e.getMessage());
+        }
     }
 }
