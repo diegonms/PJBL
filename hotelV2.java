@@ -1,5 +1,6 @@
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -178,10 +179,8 @@ class Hotel {
 
 public class hotelV2 {
     public static void main(String[] args) {
-        Hotel hotel = new Hotel();
-
         try {
-            FileReader arquivo = new FileReader("reservas.txt");
+            FileReader arquivo = new FileReader("reserva.txt");
             BufferedReader buffer = new BufferedReader(arquivo);
             String str;
             while ((str = buffer.readLine()) != null) {
