@@ -1,5 +1,3 @@
-package pjbl;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -183,7 +181,7 @@ public class hotelV2 {
         Hotel hotel = new Hotel();
 
         try {
-            FileReader arquivo = new FileReader("cliente.txt");
+            FileReader arquivo = new FileReader("reservas.txt");
             BufferedReader buffer = new BufferedReader(arquivo);
             String str;
             while ((str = buffer.readLine()) != null) {
