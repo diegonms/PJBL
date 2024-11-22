@@ -1,409 +1,259 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
 import java.io.*;
-import java.time.LocalDate;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 
-public class Sistemahoteis extends JFrame {
-    private JTextField campoNome, campoCpf, campoEmail, campoDataNascimento;
-    private JComboBox<String> comboTipoQuarto;
-    private JTextField campoCheckin, campoCheckout;
-    private GerenciadorHotel gerenciadorHotel;
+// Classe abstrata Pessoa
+abstract class Pessoa {
+    protected String nome;
+    protected String cpf;
 
-    public Sistemahoteis() {
-        configurarJanela();
-        gerenciadorHotel = new GerenciadorHotel();
-        mostrarTelaCadastroCliente();
-    }
-
-    private void configurarJanela() {
-        setTitle("Sistema de Reservas do Hotel");
-        setSize(500, 450);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-    }
-
-    private void mostrarTelaCadastroCliente() {
-        JPanel painelPrincipal = new JPanel(new BorderLayout());
-        painelPrincipal.setBackground(new Color(240, 240, 240));
-
-        JPanel painelFormulario = new JPanel(new GridLayout(4, 2, 10, 10));
-        painelFormulario.setBackground(new Color(240, 240, 240));
-        painelFormulario.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
-
-        campoNome = new JTextField();
-        campoCpf = new JTextField();
-        campoEmail = new JTextField();
-        campoDataNascimento = new JTextField();
-
-        painelFormulario.add(new JLabel("Nome:"));
-        painelFormulario.add(campoNome);
-        painelFormulario.add(new JLabel("CPF:"));
-        painelFormulario.add(campoCpf);
-        painelFormulario.add(new JLabel("Email:"));
-        painelFormulario.add(campoEmail);
-        painelFormulario.add(new JLabel("Data de Nascimento (DD-MM-AAAA):"));
-        painelFormulario.add(campoDataNascimento);
-
-        painelPrincipal.add(painelFormulario, BorderLayout.CENTER);
-
-        JButton botaoAvancar = new JButton("Avançar");
-        estilizarBotao(botaoAvancar);
-        botaoAvancar.addActionListener(e -> avancarParaEscolhaQuarto());
-
-        JPanel painelBotao = new JPanel();
-        painelBotao.setBackground(new Color(240, 240, 240));
-        painelBotao.add(botaoAvancar);
-        painelPrincipal.add(painelBotao, BorderLayout.SOUTH);
-
-        setContentPane(painelPrincipal);
-        setVisible(true);
-    }
-
-    private void avancarParaEscolhaQuarto() {
-        try {
-            String nome = campoNome.getText();
-            String cpf = campoCpf.getText();
-            String email = campoEmail.getText();
-            LocalDate dataNascimento = LocalDate.parse(campoDataNascimento.getText());
-
-            if (LocalDate.now().getYear() - dataNascimento.getYear() >= 18) {
-                mostrarTelaEscolhaQuarto(nome, cpf, email, dataNascimento);
-            } else {
-                JOptionPane.showMessageDialog(this, "Você deve ser maior de 18 anos para fazer a reserva.");
-            }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Por favor, insira uma data válida no formato DD-MM-AAAA.");
-        }
-    }
-
-    private void mostrarTelaEscolhaQuarto(String nome, String cpf, String email, LocalDate dataNascimento) {
-        getContentPane().removeAll();
-        setSize(500, 450);
-
-        JPanel painelEscolhaQuarto = new JPanel(new BorderLayout());
-        painelEscolhaQuarto.setBackground(new Color(240, 240, 240));
-
-        JPanel painelFormulario = new JPanel(new GridLayout(3, 2, 10, 10));
-        painelFormulario.setBackground(new Color(240, 240, 240));
-        painelFormulario.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
-
-        comboTipoQuarto = new JComboBox<>(new String[]{"Normal", "Familia", "Suite"});
-        campoCheckin = new JTextField();
-        campoCheckout = new JTextField();
-
-        painelFormulario.add(new JLabel("Tipo de Quarto:"));
-        painelFormulario.add(comboTipoQuarto);
-        painelFormulario.add(new JLabel("Data de Check-in (DD-MM-AAAA):"));
-        painelFormulario.add(campoCheckin);
-        painelFormulario.add(new JLabel("Data de Check-out (DD-MM-AAAA):"));
-        painelFormulario.add(campoCheckout);
-
-        painelEscolhaQuarto.add(painelFormulario, BorderLayout.CENTER);
-
-        JButton botaoAvancar = new JButton("Avançar");
-        estilizarBotao(botaoAvancar);
-        botaoAvancar.addActionListener(e -> avancarParaPagamento(nome, cpf, email, dataNascimento));
-
-        JPanel painelBotao = new JPanel();
-        painelBotao.setBackground(new Color(240, 240, 240));
-        painelBotao.add(botaoAvancar);
-        painelEscolhaQuarto.add(painelBotao, BorderLayout.SOUTH);
-
-        setContentPane(painelEscolhaQuarto);
-        revalidate();
-        repaint();
-    }
-
-    private void avancarParaPagamento(String nome, String cpf, String email, LocalDate dataNascimento) {
-        String tipoQuartoSelecionado = (String) comboTipoQuarto.getSelectedItem();
-        LocalDate checkin = LocalDate.parse(campoCheckin.getText());
-        LocalDate checkout = LocalDate.parse(campoCheckout.getText());
-
-        getContentPane().removeAll();
-        setSize(500, 450);
-
-        JPanel painelPagamento = new JPanel(new BorderLayout());
-        painelPagamento.setBackground(new Color(240, 240, 240));
-
-        JButton botaoPix = new JButton("Pagar com Pix");
-        JButton botaoCartao = new JButton("Pagar com Cartão");
-
-        estilizarBotao(botaoPix);
-        estilizarBotao(botaoCartao);
-
-        botaoPix.addActionListener(e -> finalizarReserva(nome, cpf, email, dataNascimento, tipoQuartoSelecionado, checkin, checkout, "Pix"));
-        botaoCartao.addActionListener(e -> finalizarReserva(nome, cpf, email, dataNascimento, tipoQuartoSelecionado, checkin, checkout, "Cartão"));
-
-        JPanel painelBotoes = new JPanel();
-        painelBotoes.add(botaoPix);
-        painelBotoes.add(botaoCartao);
-        painelPagamento.add(painelBotoes, BorderLayout.CENTER);
-
-        setContentPane(painelPagamento);
-        revalidate();
-        repaint();
-    }
-
-    private void finalizarReserva(String nome, String cpf, String email, LocalDate dataNascimento, String tipoQuarto, LocalDate checkin, LocalDate checkout, String metodoPagamento) {
-        String codigoPagamento = (metodoPagamento.equals("Pix") ? "PIX-" : "RESERVA-") + new Random().nextInt(999999);
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("reserva.txt", true))) {
-            writer.write("Nome: " + nome);
-            writer.write("\nCPF: " + cpf);
-            writer.write("\nEmail: " + email);
-            writer.write("\nData de Nascimento: " + dataNascimento);
-            writer.write("\nTipo de Quarto: " + tipoQuarto);
-            writer.write("\nCheck-in: " + checkin);
-            writer.write("\nCheck-out: " + checkout);
-            writer.write("\nMétodo de Pagamento: " + metodoPagamento);
-            writer.write("\nCódigo de Pagamento: " + codigoPagamento + "\n\n");
-            JOptionPane.showMessageDialog(this, "Reserva finalizada com sucesso!");
-            dispose();
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Erro ao salvar reserva: " + e.getMessage());
-        }
-    }
-
-    private void estilizarBotao(JButton botao) {
-        botao.setBackground(new Color(63, 81, 181));
-        botao.setForeground(Color.WHITE);
-        botao.setFont(new Font("Arial", Font.BOLD, 14));
-        botao.setFocusPainted(false);
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(Sistemahoteis::new);
-    }
-}
-
-class GerenciadorHotel {
-    private List<Quarto> quartos;
-    private List<Cliente> clientes;
-
-    public GerenciadorHotel() {
-        try {
-            LeitorDeArquivos leitor = new LeitorDeArquivos();
-            quartos = leitor.lerQuartos("quartos.txt");
-            clientes = leitor.lerClientes("clientes.txt");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public List<Quarto> getQuartosDisponiveis() {
-        return quartos;
-    }
-
-    public List<Cliente> getClientes() {
-        return clientes;
-    }
-}
-
-class LeitorDeArquivos {
-        public List<Quarto> lerQuartos(String caminhoArquivo) throws IOException {
-            List<Quarto> quartos = new ArrayList<>();
-            try (BufferedReader br = new BufferedReader(new FileReader(caminhoArquivo))) {
-                String linha;
-                while ((linha = br.readLine()) != null) {
-                    String[] dados = linha.split(",");
-                    String tipo = dados[0];
-                    int numero = Integer.parseInt(dados[1]);
-                    boolean disponivel = Boolean.parseBoolean(dados[2]);
-                    int valorDiaria = Integer.parseInt(dados[3]);
-
-                    Quarto quarto;
-                    switch (tipo) {
-                        case "Normal" -> quarto = new QuartoNormal(numero, disponivel, valorDiaria);
-                        case "Familia" -> quarto = new QuartoFamilia(numero, disponivel, valorDiaria);
-                        case "Suite" -> quarto = new QuartoSuite(numero, disponivel, valorDiaria);
-                        default -> throw new IllegalArgumentException("Tipo de quarto inválido: " + tipo);
-                    }
-                    quartos.add(quarto);
-                }
-            }
-            return quartos;
-        }
-
-        public List<Cliente> lerClientes(String caminhoArquivo) throws IOException {
-            List<Cliente> clientes = new ArrayList<>();
-            try (BufferedReader br = new BufferedReader(new FileReader(caminhoArquivo))) {
-                String linha;
-                while ((linha = br.readLine()) != null) {
-                    String[] dados = linha.split(",");
-                    String tipo = dados[0];
-                    String cpf = dados[1];
-                    String nome = dados[2];
-                    double pontos = Double.parseDouble(dados[3]);
-
-                    Cliente cliente;
-                    if (tipo.equals("VIP")) {
-                        cliente = new ClienteVIP(cpf, nome, pontos);
-                    } else if (tipo.equals("Diamante")) {
-                        double desconto = Double.parseDouble(dados[4]);
-                        cliente = new ClienteDiamante(cpf, nome, pontos, desconto);
-                    } else {
-                        throw new IllegalArgumentException("Tipo de cliente inválido: " + tipo);
-                    }
-                    clientes.add(cliente);
-                }
-            }
-            return clientes;
-        }
-    }
-
-
-abstract class Quarto {
-    private String classe;
-    private int numero;
-    private boolean disponivel;
-    private int valorDiaria;
-
-    public Quarto(String classe, int numero, boolean disponivel, int valorDiaria) {
-        this.classe = classe;
-        this.numero = numero;
-        this.disponivel = disponivel;
-        this.valorDiaria = valorDiaria;
-    }
-
-    public void reservar() {
-        this.disponivel = false;
-    }
-
-    public void liberar() {
-        this.disponivel = true;
-    }
-
-    public boolean isDisponivel() {
-        return disponivel;
-    }
-
-    public abstract double calcularValorTotal(int dias);
-}
-
-class QuartoNormal extends Quarto {
-    public QuartoNormal(int numero, boolean disponivel, int valorDiaria) {
-        super("Normal", numero, disponivel, valorDiaria);
-    }
-
-    @Override
-    public double calcularValorTotal(int dias) {
-        return dias * 100;
-    }
-}
-
-class QuartoFamilia extends Quarto {
-    public QuartoFamilia(int numero, boolean disponivel, int valorDiaria) {
-        super("Familia", numero, disponivel, valorDiaria);
-    }
-
-    @Override
-    public double calcularValorTotal(int dias) {
-        return dias * 200;
-    }
-}
-
-class QuartoSuite extends Quarto {
-    public QuartoSuite(int numero, boolean disponivel, int valorDiaria) {
-        super("Suite", numero, disponivel, valorDiaria);
-    }
-
-    @Override
-    public double calcularValorTotal(int dias) {
-        return dias * 500;
-    }
-}
-
-abstract class Cliente {
-    private String cpf;
-    private String nome;
-
-    public Cliente(String cpf, String nome) {
-        this.cpf = cpf;
+    public Pessoa(String nome, String cpf) {
         this.nome = nome;
+        this.cpf = cpf;
     }
 
-    public String getNome() {
-        return nome;
+    public abstract String obterDetalhes();
+}
+
+// Subclasse Cliente
+class Cliente extends Pessoa {
+    private LocalDate nascimento;
+
+    public Cliente(String nome, String cpf, LocalDate nascimento) {
+        super(nome, cpf);
+        this.nascimento = nascimento;
+    }
+
+    @Override
+    public String obterDetalhes() {
+        return "Nome: " + nome + "\n" +
+                "CPF: " + cpf + "\n" +
+                "Nascimento: " + nascimento.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    }
+
+    public LocalDate getNascimento() {
+        return nascimento;
     }
 }
 
-class ClienteVIP extends Cliente {
-    private double pontos;
+// Classe Reserva
+class Reserva {
+    private Cliente cliente;
+    private String tipoQuarto;
+    private LocalDate checkin;
+    private LocalDate checkout;
+    private double valor;
 
-    public ClienteVIP(String cpf, String nome, double pontos) {
-        super(cpf, nome);
-        this.pontos = pontos;
+    public Reserva(Cliente cliente, String tipoQuarto, LocalDate checkin, LocalDate checkout, double valor) {
+        this.cliente = cliente;
+        this.tipoQuarto = tipoQuarto;
+        this.checkin = checkin;
+        this.checkout = checkout;
+        this.valor = valor;
+    }
+
+    @Override
+    public String toString() {
+        return cliente.obterDetalhes() + "\n" +
+                "Tipo de Quarto: " + tipoQuarto + "\n" +
+                "Check-in: " + checkin.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + "\n" +
+                "Check-out: " + checkout.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + "\n" +
+                "Valor: R$ " + valor + "\n" +
+                "--------";
     }
 }
 
-class ClienteDiamante extends Cliente {
-    private double pontos;
-    private double desconto;
+// Gerenciamento de arquivo e reservas
+class ArquivoReserva {
+    private static final String CAMINHO_ARQUIVO = "reservas.txt";
+    private static final ArrayList<Reserva> reservasList = new ArrayList<>();
 
-    public ClienteDiamante(String cpf, String nome, double pontos, double desconto) {
-        super(cpf, nome);
-        this.pontos = pontos;
-        this.desconto = desconto;
-    }
-}
-
-class Estadia {
-    private int dias;
-    public Estadia(int dias) {
-        this.dias = dias;
-    }
-
-    public int getDias() {
-        return dias;
-    }
-}
-
-class Pagamento {
-    private String metodo;
-
-    public Pagamento(String metodo) {
-        this.metodo = metodo;
-    }
-
-    public void realizarPagamento(double valor) {
-        System.out.println("Pagamento de R$" + valor + " realizado via " + metodo + ".");
-    }
-}
-
-class Hotel {
-    private List<Quarto> quartos = new ArrayList<>();
-    private List<Cliente> clientes = new ArrayList<>();
-
-    public void adicionarQuarto(Quarto quarto) {
-        quartos.add(quarto);
-    }
-
-    public void cadastrarCliente(Cliente cliente) {
-        clientes.add(cliente);
-    }
-
-    public void criarReserva(Cliente cliente, Quarto quarto, Estadia estadia, Pagamento pagamento) {
-        if (quarto.isDisponivel()) {
-            quarto.reservar();
-            double valorTotal = quarto.calcularValorTotal(estadia.getDias());
-            pagamento.realizarPagamento(valorTotal);
-            System.out.println("Reserva feita para " + cliente.getNome() + " no quarto " + quarto.getClass().getSimpleName());
-        } else {
-            System.out.println("Quarto indisponível.");
+    public static void salvarReserva(Reserva reserva) {
+        reservasList.add(reserva);
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(CAMINHO_ARQUIVO, true))) {
+            writer.write(reserva.toString());
+            writer.newLine();
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null, "Erro ao salvar reserva: " + e.getMessage());
         }
     }
-}
-class SistemaHotelException extends Exception {
-    public SistemaHotelException(String message) {
-        super(message);
+
+    public static String lerReservas() {
+        StringBuilder reservas = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(CAMINHO_ARQUIVO))) {
+            String linha;
+            while ((linha = reader.readLine()) != null) {
+                reservas.append(linha).append("\n");
+            }
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null, "Erro ao ler arquivo: " + e.getMessage());
         }
+        return reservas.toString();
+    }
 }
 
-class QuartoIndisponivelException extends SistemaHotelException {
-    public QuartoIndisponivelException(int numeroQuarto) {
-        super("O quarto número " + numeroQuarto + " está indisponível para reserva.");
+// Tela inicial
+class TelaInicial {
+    public TelaInicial() {
+        JFrame frame = new JFrame("Sistema de Reservas de Hotel");
+        frame.setSize(600, 400);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        JButton btnReservar = new JButton("Fazer Reserva");
+        JButton btnAdm = new JButton("Área Administrativa");
+
+        btnReservar.addActionListener(e -> new TelaCadastro());
+        btnAdm.addActionListener(e -> new TelaAdm());
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(2, 1, 10, 10));
+        panel.add(btnReservar);
+        panel.add(btnAdm);
+
+        frame.add(panel, BorderLayout.CENTER);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    }
+}
+
+// Tela de cadastro
+class TelaCadastro {
+    public TelaCadastro() {
+        JFrame frame = new JFrame("Cadastro de Reserva");
+        frame.setSize(600, 400);
+        frame.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+
+        JTextField nomeField = new JTextField(20);
+        JTextField cpfField = new JTextField(20);
+        JTextField nascimentoField = new JTextField(20);
+
+        JButton btnSalvar = new JButton("Salvar");
+        btnSalvar.addActionListener(e -> {
+            try {
+                String nome = nomeField.getText().trim();
+                String cpf = cpfField.getText().trim();
+                LocalDate nascimento = LocalDate.parse(nascimentoField.getText(), DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
+                if (!cpf.matches("\\d{11}")) {
+                    throw new Exception("CPF inválido! Deve conter apenas 11 dígitos.");
+                }
+
+                Cliente cliente = new Cliente(nome, cpf, nascimento);
+                new TelaEscolherQuarto(cliente);
+                frame.dispose();
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(frame, "Erro: " + ex.getMessage());
+            }
+        });
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        frame.add(new JLabel("Nome:"), gbc);
+        gbc.gridx = 1;
+        frame.add(nomeField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        frame.add(new JLabel("CPF:"), gbc);
+        gbc.gridx = 1;
+        frame.add(cpfField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        frame.add(new JLabel("Nascimento (dd/MM/yyyy):"), gbc);
+        gbc.gridx = 1;
+        frame.add(nascimentoField, gbc);
+
+        gbc.gridx = 1;
+        gbc.gridy = 3;
+        frame.add(btnSalvar, gbc);
+
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    }
+}
+
+// Tela para escolha de quarto
+class TelaEscolherQuarto {
+    public TelaEscolherQuarto(Cliente cliente) {
+        JFrame frame = new JFrame("Escolha de Quarto");
+        frame.setSize(600, 400);
+
+        JRadioButton quartoSimples = new JRadioButton("Quarto Simples - R$150/dia");
+        JRadioButton quartoLuxo = new JRadioButton("Quarto Luxo - R$300/dia");
+        JRadioButton quartoPremium = new JRadioButton("Quarto Premium - R$450/dia");
+
+        ButtonGroup grupoQuartos = new ButtonGroup();
+        grupoQuartos.add(quartoSimples);
+        grupoQuartos.add(quartoLuxo);
+        grupoQuartos.add(quartoPremium);
+
+        JButton btnConfirmar = new JButton("Confirmar");
+        btnConfirmar.addActionListener(e -> {
+            try {
+                String tipoQuarto;
+                double valor;
+
+                if (quartoSimples.isSelected()) {
+                    tipoQuarto = "Simples";
+                    valor = 150;
+                } else if (quartoLuxo.isSelected()) {
+                    tipoQuarto = "Luxo";
+                    valor = 300;
+                } else if (quartoPremium.isSelected()) {
+                    tipoQuarto = "Premium";
+                    valor = 450;
+                } else {
+                    throw new Exception("Selecione um tipo de quarto.");
+                }
+
+                Reserva reserva = new Reserva(cliente, tipoQuarto, LocalDate.now(), LocalDate.now().plusDays(1), valor);
+                ArquivoReserva.salvarReserva(reserva);
+
+                JOptionPane.showMessageDialog(frame, "Reserva confirmada: \n" + reserva.toString());
+                frame.dispose();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(frame, "Erro: " + ex.getMessage());
+            }
+        });
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(4, 1, 10, 10));
+        panel.add(quartoSimples);
+        panel.add(quartoLuxo);
+        panel.add(quartoPremium);
+        panel.add(btnConfirmar);
+
+        frame.add(panel);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    }
+}
+
+// Tela administrativa
+class TelaAdm {
+    public TelaAdm() {
+        JFrame frame = new JFrame("Área Administrativa");
+        frame.setSize(600, 400);
+
+        JTextArea textArea = new JTextArea(ArquivoReserva.lerReservas());
+        textArea.setEditable(false);
+
+        frame.add(new JScrollPane(textArea));
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    }
+}
+
+public class Sistemahoteis {
+    public static void main(String[] args) {
+        new TelaInicial();
     }
 }
